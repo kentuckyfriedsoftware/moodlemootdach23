@@ -1090,7 +1090,11 @@ class page_requirements_manager {
     public function js_export_plugin_config($component) {
         global $CFG;
         global $DB;
-        $js = js_writer::set_variable('M.modname', json_encode($component), false);
+        $config_settings = $DB->get_records('config_plugins', ['plugin' => $component], '', $fields = 'name, value');
+        $js = js_writer::set_variable('M.' . $component, new stdClass(), false);
+        foreach($config_settings as $cs){
+            $js .= js_writer::set_variable('M.' . $component . '.' . $cs->name, $cs->value, false);
+        }
         $this->js_amd_inline($js);
     }
 
