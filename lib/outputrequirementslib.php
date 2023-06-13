@@ -1080,6 +1080,19 @@ class page_requirements_manager {
 
         $this->js_amd_inline($js);
     }
+    
+    /**
+     * Export a plugins configuration to javascript
+     *
+     *
+     * @param string $component The name of the plugin
+     */
+    public function js_export_plugin_config($component) {
+        global $CFG;
+        global $DB;
+        $js = js_writer::set_variable('M.modname', json_encode($component), false);
+        $this->js_amd_inline($js);
+    }
 
     /**
      * Creates a JavaScript function call that requires one or more modules to be loaded.
