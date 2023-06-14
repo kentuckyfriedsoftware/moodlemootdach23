@@ -1087,15 +1087,17 @@ class page_requirements_manager {
      *
      * @param string $component The name of the plugin
      */
-    public function js_export_plugin_config($component) {
+    public function js_export_plugin_config(string $component) {
         global $CFG;
         global $DB;
         $config_settings = $DB->get_records('config_plugins', ['plugin' => $component], '', $fields = 'name, value');
-        $js = js_writer::set_variable('M.' . $component, new stdClass(), false);
-        foreach($config_settings as $cs){
-            $js .= js_writer::set_variable('M.' . $component . '.' . $cs->name, $cs->value, false);
+        if ($config_settings) {
+            $js = js_writer::set_variable('M.' . $component, new stdClass(), false);
+            foreach($config_settings as $cs){
+                $js .= js_writer::set_variable('M.' . $component . '.' . $cs->name, $cs->value, false);
+            }
+            $this->js_amd_inline($js);
         }
-        $this->js_amd_inline($js);
     }
 
     /**
