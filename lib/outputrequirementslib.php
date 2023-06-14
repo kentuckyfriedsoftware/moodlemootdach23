@@ -1082,19 +1082,36 @@ class page_requirements_manager {
     }
     
     /**
-     * Export a plugins configuration to javascript
-     *
-     *
+     * Export a plugins configuration for use in javascript
+     * 
+     * This function creates a minimal inline JS snippet that adds
+     * an element to the global M variable named for the component
+     * passed as first argument. M.<component name> will then contain
+     * whatever settings are found in the plugins_config table
+     * Pass an array of strings for $desired_settings to specify which
+     * settings should be added, otherwise everything will be.
+     * 
      * @param string $component The name of the plugin
+     * @param array $desired_settings An array of the names of the settings that should be exported
      */
-    public function js_export_plugin_config(string $component) {
+    public function js_export_plugin_config(string $component, array $desired_settings = null) {
         global $CFG;
         global $DB;
-        $config_settings = $DB->get_records('config_plugins', ['plugin' => $component], '', $fields = 'name, value');
-        if ($config_settings) {
+        $plugin_settings = $DB->get_records('config_plugins', ['plugin' => $component], '', $fields = 'name, value');
+        if ($plugin_settings) {
             $js = js_writer::set_variable('M.' . $component, new stdClass(), false);
-            foreach($config_settings as $cs){
-                $js .= js_writer::set_variable('M.' . $component . '.' . $cs->name, $cs->value, false);
+            if(is_null($desired_settings)) {
+                // Add everything
+                foreach($plugin_settings as $cs){
+                    $js .= js_writer::set_variable('M.' . $component . '.' . $cs->name, $cs->value, false);
+                }
+            } else {
+                // Add only settings specified by $desired_settings
+                foreach($plugin_settings as $cs){
+                    if(false !== array_search($cs->name, $desired_settings)){
+                        $js .= js_writer::set_variable('M.' . $component . '.' . $cs->name, $cs->value, false);
+                    }
+                }
             }
             $this->js_amd_inline($js);
         }
