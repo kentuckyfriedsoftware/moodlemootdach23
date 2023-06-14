@@ -1091,6 +1091,10 @@ class page_requirements_manager {
      * Pass an array of strings for $desired_settings to specify which
      * settings should be added, otherwise everything will be.
      * 
+     * NOTE: Be careful about what you expose to the frontend. You DO NOT
+     * want sensitive data like security tokens or passwords showing up in
+     * the global M variable
+     * 
      * @param string $component The name of the plugin
      * @param array $desired_settings An array of the names of the settings that should be exported
      */
