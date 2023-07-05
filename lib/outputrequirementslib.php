@@ -1096,23 +1096,22 @@ class page_requirements_manager {
      * the global M variable
      * 
      * @param string $component The name of the plugin
-     * @param array $desired_settings An array of the names of the settings that should be exported
+     * @param array $desiredsettings An array of the names of the settings that should be exported
      */
-    public function js_export_plugin_config(string $component, array $desired_settings = null) {
-        global $CFG;
+    public function js_export_plugin_config(string $component, array $desiredsettings = null) {
         global $DB;
-        $plugin_settings = $DB->get_records('config_plugins', ['plugin' => $component], '', $fields = 'name, value');
-        if ($plugin_settings) {
+        $pluginsettings = $DB->get_records('config_plugins', ['plugin' => $component], '', $fields = 'name, value');
+        if ($pluginsettings) {
             $js = js_writer::set_variable('M.' . $component, new stdClass(), false);
-            if(is_null($desired_settings)) {
-                // Add everything
-                foreach($plugin_settings as $cs){
+            if (is_null($desiredsettings)) {
+                // Add everything.
+                foreach ($pluginsettings as $cs) {
                     $js .= js_writer::set_variable('M.' . $component . '.' . $cs->name, $cs->value, false);
                 }
             } else {
-                // Add only settings specified by $desired_settings
-                foreach($plugin_settings as $cs){
-                    if(false !== array_search($cs->name, $desired_settings)){
+                // Add only settings specified by $desiredsettings.
+                foreach ($pluginsettings as $cs) {
+                    if (false !== array_search($cs->name, $desiredsettings)) {
                         $js .= js_writer::set_variable('M.' . $component . '.' . $cs->name, $cs->value, false);
                     }
                 }
