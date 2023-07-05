@@ -1116,6 +1116,9 @@ class single_select implements renderable, templatable {
      */
     var $helpicon = null;
 
+    /** @var component_action[] component action. */
+    public $actions = [];
+
     /**
      * Constructor
      * @param moodle_url $url form action target, includes hidden fields
@@ -2865,6 +2868,9 @@ class html_table {
 
     /** @var bool Whether to make the table to be scrolled horizontally with ease. Make table responsive across all viewports. */
     public $responsive = true;
+
+    /** @var string class name to add to this html table. */
+    public $class;
 
     /**
      * Constructor
@@ -5151,7 +5157,8 @@ class progress_bar implements renderable, templatable {
 
         $estimatemsg = '';
         if ($estimate != 0 && is_numeric($estimate)) {
-            $estimatemsg = format_time(round($estimate));
+            // Err on the conservative side and also avoid showing 'now' as the estimate.
+            $estimatemsg = format_time(ceil($estimate));
         }
 
         $this->percent = $percent;

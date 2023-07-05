@@ -32,6 +32,7 @@ if (!defined('MAX_MODINFO_CACHE_SIZE')) {
     define('MAX_MODINFO_CACHE_SIZE', 10);
 }
 
+use core_courseformat\output\activitybadge;
 
 /**
  * Information about a course that is cached in the course table 'modinfo' field (and then in
@@ -1757,6 +1758,28 @@ class cm_info implements IteratorAggregate {
     }
 
     /**
+     * Get the activity badge data associated to this course module (if the module supports it).
+     * Modules can use this method to provide additional data to be displayed in the activity badge.
+     *
+     * @param renderer_base $output Output render to use, or null for default (global)
+     * @return stdClass|null The activitybadge data (badgecontent, badgestyle...) or null if the module doesn't implement it.
+     */
+    public function get_activitybadge(?renderer_base $output = null): ?stdClass {
+        global $OUTPUT;
+
+        $activibybadgeclass = activitybadge::create_instance($this);
+        if (empty($activibybadgeclass)) {
+            return null;
+        }
+
+        if (!isset($output)) {
+            $output = $OUTPUT;
+        }
+
+        return $activibybadgeclass->export_for_template($output);
+    }
+
+    /**
      * Note: Will collect view data, if not already obtained.
      * @return string Extra HTML code to display after editing icons (e.g. more icons)
      */
@@ -3046,6 +3069,12 @@ class section_info implements IteratorAggregate {
      * @var course_modinfo
      */
     private $modinfo;
+
+    /**
+     * True if has activities, otherwise false.
+     * @var bool
+     */
+    public $hasactivites;
 
     /**
      * Constructs object from database information plus extra required data.

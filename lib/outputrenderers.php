@@ -1511,9 +1511,9 @@ class core_renderer extends renderer_base {
 
         // Provide some performance info if required
         $performanceinfo = '';
-        if ((defined('MDL_PERF') && MDL_PERF) || (!empty($CFG->perfdebug) && $CFG->perfdebug > 7)) {
+        if (MDL_PERF || (!empty($CFG->perfdebug) && $CFG->perfdebug > 7)) {
             $perf = get_performance_info();
-            if ((defined('MDL_PERFTOFOOT') && MDL_PERFTOFOOT) || debugging() || $CFG->perfdebug > 7) {
+            if (MDL_PERFTOFOOT || debugging() || (!empty($CFG->perfdebug) && $CFG->perfdebug > 7)) {
                 $performanceinfo = $perf['html'];
             }
         }
@@ -3264,6 +3264,22 @@ EOD;
     }
 
     /**
+     * Outputs a paragraph.
+     *
+     * @param string $contents The contents of the paragraph
+     * @param string|null $classes A space-separated list of CSS classes
+     * @param string|null $id An optional ID
+     * @return string the HTML to output.
+     */
+    public function paragraph(string $contents, ?string $classes = null, ?string $id = null): string {
+        return html_writer::tag(
+            'p',
+            $contents,
+            ['id' => $id, 'class' => renderer_base::prepare_classes($classes)]
+        );
+    }
+
+    /**
      * Outputs a container.
      *
      * @param string $contents The contents of the box
@@ -4275,7 +4291,7 @@ EOD;
      * @return bool
      */
     public function has_communication_links(): bool {
-        if (!core_communication\api::is_available()) {
+        if (during_initial_install() || !core_communication\api::is_available()) {
             return false;
         }
         return !empty($this->communication_link());
@@ -4287,11 +4303,6 @@ EOD;
      * @return string
      */
     public function communication_link(): string {
-
-        if (during_initial_install()) {
-            return '';
-        }
-
         $link = $this->communication_url() ?? '';
         $commicon = $this->pix_icon('t/messages-o', '', 'moodle', ['class' => 'fa fa-comments']);
         $newwindowicon = $this->pix_icon('i/externallink', get_string('opensinnewwindow'), 'moodle', ['class' => 'ml-1']);

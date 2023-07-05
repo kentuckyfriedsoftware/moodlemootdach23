@@ -301,33 +301,6 @@ function theme_set_designer_mod($state) {
 }
 
 /**
- * Checks if the given device has a theme defined in config.php.
- *
- * @return bool
- */
-function theme_is_device_locked($device) {
-    global $CFG;
-    $themeconfigname = core_useragent::get_device_type_cfg_var_name($device);
-    return isset($CFG->config_php_settings[$themeconfigname]);
-}
-
-/**
- * Returns the theme named defined in config.php for the given device.
- *
- * @return string or null
- */
-function theme_get_locked_theme_for_device($device) {
-    global $CFG;
-
-    if (!theme_is_device_locked($device)) {
-        return null;
-    }
-
-    $themeconfigname = core_useragent::get_device_type_cfg_var_name($device);
-    return $CFG->config_php_settings[$themeconfigname];
-}
-
-/**
  * This class represents the configuration variables of a Moodle theme.
  *
  * All the variables with access: public below (with a few exceptions that are marked)
@@ -688,6 +661,31 @@ class theme_config {
      * @var array
      */
     public $activityheaderconfig = [];
+
+    /**
+     * For backward compatibility with old themes.
+     * BLOCK_ADDBLOCK_POSITION_DEFAULT, BLOCK_ADDBLOCK_POSITION_FLATNAV.
+     * @var int
+     */
+    public $addblockposition;
+
+    /**
+     * editor_scss file(s) provided by this theme.
+     * @var array
+     */
+    public $editor_scss;
+
+    /**
+     * Name of the class extending \core\output\icon_system.
+     * @var string
+     */
+    public $iconsystem;
+
+    /**
+     * Theme defines its own editing mode switch.
+     * @var bool
+     */
+    public $haseditswitch = false;
 
     /**
      * Load the config.php file for a particular theme, and return an instance
@@ -1599,7 +1597,10 @@ class theme_config {
             }
             $candidates[] = $parent_config->extrascsscallback;
         }
-        $candidates[] = $this->extrascsscallback;
+
+        if (isset($this->extrascsscallback)) {
+            $candidates[] = $this->extrascsscallback;
+        }
 
         // Calling the functions.
         foreach ($candidates as $function) {
@@ -1629,7 +1630,10 @@ class theme_config {
             }
             $candidates[] = $parent_config->prescsscallback;
         }
-        $candidates[] = $this->prescsscallback;
+
+        if (isset($this->prescsscallback)) {
+            $candidates[] = $this->prescsscallback;
+        }
 
         // Calling the functions.
         foreach ($candidates as $function) {

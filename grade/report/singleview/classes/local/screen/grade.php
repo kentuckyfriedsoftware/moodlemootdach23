@@ -151,11 +151,21 @@ class grade extends tablelike implements selectable_items, filterable_items {
      */
     public function init($selfitemisempty = false) {
 
-        $this->items = $this->load_users();
+        $this->items = get_gradable_users($this->courseid, $this->groupid);
         $this->totalitemcount = count($this->items);
 
         if ($selfitemisempty) {
             return;
+        }
+
+        // If we change perpage on pagination we might end up with a page that doesn't exist.
+        if ($this->perpage) {
+            $numpages = intval($this->totalitemcount / $this->perpage) + 1;
+            if ($numpages <= $this->page) {
+                $this->page = 0;
+            }
+        } else {
+            $this->page = 0;
         }
 
         $params = [

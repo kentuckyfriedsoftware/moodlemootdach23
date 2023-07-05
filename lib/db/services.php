@@ -127,6 +127,12 @@ $functions = array(
         'capabilities'  => 'moodle/badges:viewotherbadges',
         'services'      => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
     ),
+    'core_badges_get_user_badge_by_hash' => [
+        'classname'     => 'core_badges\external\get_user_badge_by_hash',
+        'description'   => 'Returns the badge awarded to a user by hash.',
+        'type'          => 'read',
+        'services'      => [MOODLE_OFFICIAL_MOBILE_SERVICE],
+    ],
     'core_blog_get_entries' => array(
         'classname'   => 'core_blog\external',
         'methodname'  => 'get_entries',
@@ -949,14 +955,6 @@ $functions = array(
         'ajax' => true,
         'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],
     ],
-    'core_grades_create_gradecategory' => array (
-        'classname' => 'core_grades_external',
-        'methodname' => 'create_gradecategory',
-        'description' => '** DEPRECATED ** Please do not call this function any more. Use core_grades_create_gradecategories.
-                                     Create a grade category inside a course gradebook.',
-        'type' => 'write',
-        'capabilities' => 'moodle/grade:manage',
-    ),
     'core_grades_create_gradecategories' => array (
         'classname' => 'core_grades\external\create_gradecategories',
         'description' => 'Create grade categories inside a course gradebook.',
@@ -2827,6 +2825,13 @@ $functions = array(
         'type' => 'write',
         'ajax' => true,
         'capabilities' => '',
+        'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],
+    ],
+    'core_xapi_delete_states' => [
+        'classname' => 'core_xapi\external\delete_states',
+        'description' => 'Delete all xAPI state data from an activityId.',
+        'type' => 'write',
+        'ajax' => true,
         'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],
     ],
     'core_contentbank_delete_content' => [

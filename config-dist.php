@@ -91,6 +91,10 @@ $CFG->dboptions = array(
                                 // set to zero if you are using pg_bouncer in
                                 // 'transaction' mode (it is fine in 'session'
                                 // mode).
+    // 'clientcompress' => true // Use compression protocol to communicate with the database server.
+                                // Decreases traffic from the database server.
+                                // Not needed if the databse is on the same host.
+                                // Currently supported only with mysqli, mariadb, and aurora drivers.
     /*
     'connecttimeout' => null, // Set connect timeout in seconds. Not all drivers support it.
     'readonly' => [          // Set to read-only slave details, to get safe reads
@@ -329,6 +333,9 @@ $CFG->admin = 'admin';
 //   Redis session handler (requires redis server and redis extension):
 //      $CFG->session_handler_class = '\core\session\redis';
 //      $CFG->session_redis_host = '127.0.0.1';
+//      Use TLS to connect to Redis. An array of SSL context options. Usually:
+//      $CFG->session_redis_encrypt = ['cafile' => '/path/to/ca.crt']; or...
+//      $CFG->session_redis_encrypt = ['verify_peer' => false, 'verify_peer_name' => false];
 //      $CFG->session_redis_port = 6379;                     // Optional.
 //      $CFG->session_redis_database = 0;                    // Optional, default is db 0.
 //      $CFG->session_redis_auth = '';                       // Optional, default is don't set one.
@@ -417,9 +424,6 @@ $CFG->admin = 'admin';
 //
 //   Capture performance profiling data
 //   define('MDL_PERF'  , true);
-//
-//   Capture additional data from DB
-//   define('MDL_PERFDB'  , true);
 //
 //   Print to log (for passive profiling of production servers)
 //   define('MDL_PERFTOLOG'  , true);

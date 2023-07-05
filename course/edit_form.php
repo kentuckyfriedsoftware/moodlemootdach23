@@ -374,22 +374,6 @@ class course_edit_form extends moodleform {
         $options[0] = get_string('none');
         $mform->addElement('select', 'defaultgroupingid', get_string('defaultgrouping', 'group'), $options);
 
-        if ((empty($course->id) && guess_if_creator_will_have_course_capability('moodle/course:renameroles', $categorycontext))
-                || (!empty($course->id) && has_capability('moodle/course:renameroles', $coursecontext))) {
-            // Customizable role names in this course.
-            $mform->addElement('header', 'rolerenaming', get_string('rolerenaming'));
-            $mform->addHelpButton('rolerenaming', 'rolerenaming');
-
-            if ($roles = get_all_roles()) {
-                $roles = role_fix_names($roles, null, ROLENAME_ORIGINAL);
-                $assignableroles = get_roles_for_contextlevels(CONTEXT_COURSE);
-                foreach ($roles as $role) {
-                    $mform->addElement('text', 'role_' . $role->id, get_string('yourwordforx', '', $role->localname));
-                    $mform->setType('role_' . $role->id, PARAM_TEXT);
-                }
-            }
-        }
-
         if (core_tag_tag::is_enabled('core', 'course') &&
                 ((empty($course->id) && guess_if_creator_will_have_course_capability('moodle/course:tag', $categorycontext))
                 || (!empty($course->id) && has_capability('moodle/course:tag', $coursecontext)))) {
@@ -405,11 +389,24 @@ class course_edit_form extends moodleform {
 
         // Add communication plugins to the form.
         if (core_communication\api::is_available()) {
+
+            $instanceconfig = core_communication\processor::PROVIDER_NONE;
+            // For new courses.
+            if (empty($course->id)) {
+                $instanceid = 0;
+                if (!empty($courseconfig->coursecommunicationprovider)) {
+                    $instanceconfig = $courseconfig->coursecommunicationprovider;
+                }
+            } else {
+                // For existing courses.
+                $instanceid = $course->id;
+            }
+
             $communication = \core_communication\api::load_by_instance(
                 'core_course',
                 'coursecommunication',
-                empty($course->id) ? 0 : $course->id);
-            $communication->form_definition($mform);
+                $instanceid);
+            $communication->form_definition($mform, $instanceconfig);
             $communication->set_data($course);
         }
 

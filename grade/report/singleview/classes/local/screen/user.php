@@ -102,7 +102,7 @@ class user extends tablelike implements selectable_items {
     public function init($selfitemisempty = false) {
 
         if (!$selfitemisempty) {
-            $validusers = $this->load_users();
+            $validusers = get_gradable_users($this->courseid, $this->groupid);
             if (!isset($validusers[$this->itemid])) {
                 // If the passed user id is not valid, show the first user from the list instead.
                 $this->item = reset($validusers);
@@ -119,6 +119,16 @@ class user extends tablelike implements selectable_items {
             if (grade::filter($item)) {
                 $this->items[$itemid] = $item;
             }
+        }
+
+        // If we change perpage on pagination we might end up with a page that doesn't exist.
+        if ($this->perpage) {
+            $numpages = intval(count($this->items) / $this->perpage) + 1;
+            if ($numpages <= $this->page) {
+                $this->page = 0;
+            }
+        } else {
+            $this->page = 0;
         }
 
         $this->requirespaging = count($this->items) > $this->perpage;

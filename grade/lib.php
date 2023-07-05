@@ -782,6 +782,37 @@ function grade_get_plugin_info($courseid, $active_type, $active_plugin) {
 }
 
 /**
+ * Load a valid list of gradable users in a course.
+ *
+ * @param int $courseid The course ID.
+ * @param int|null $groupid The group ID (optional).
+ * @return array $users A list of enrolled gradable users.
+ */
+function get_gradable_users(int $courseid, ?int $groupid = null): array {
+    global $CFG;
+
+    $context = context_course::instance($courseid);
+    // Create a graded_users_iterator because it will properly check the groups etc.
+    $defaultgradeshowactiveenrol = !empty($CFG->grade_report_showonlyactiveenrol);
+    $onlyactiveenrol = get_user_preferences('grade_report_showonlyactiveenrol', $defaultgradeshowactiveenrol) ||
+        !has_capability('moodle/course:viewsuspendedusers', $context);
+
+    $course = get_course($courseid);
+    $gui = new graded_users_iterator($course, null, $groupid);
+    $gui->require_active_enrolment($onlyactiveenrol);
+    $gui->init();
+
+    // Flatten the users.
+    $users = [];
+    while ($user = $gui->next_user()) {
+        $users[$user->user->id] = $user->user;
+    }
+    $gui->close();
+
+    return $users;
+}
+
+/**
  * A simple class containing info about grade plugins.
  * Can be subclassed for special rules
  *
@@ -2030,6 +2061,8 @@ class grade_structure {
      * @return string|null
      */
     public function get_edit_link(array $element, object $gpr): ?string {
+        global $CFG;
+
         $url = null;
         $title = '';
         if ((!has_capability('moodle/grade:manage', $this->context) &&
@@ -2052,8 +2085,15 @@ class grade_structure {
         } else if (($element['type'] == 'item') || ($element['type'] == 'categoryitem') ||
             ($element['type'] == 'courseitem')) {
             if (empty($object->outcomeid) || empty($CFG->enableoutcomes)) {
-                $url = new moodle_url('/grade/edit/tree/item.php',
-                    ['courseid' => $this->courseid, 'id' => $object->id]);
+                $url = new moodle_url('#');
+                return html_writer::link($url, get_string('itemsedit', 'grades'), [
+                    'class' => 'dropdown-item',
+                    'aria-label' => get_string('itemsedit', 'grades'),
+                    'role' => 'menuitem',
+                    'data-gprplugin' => $gpr->plugin,
+                    'data-courseid' => $this->courseid,
+                    'data-itemid' => $object->id, 'data-trigger' => 'add-item-form'
+                ]);
             } else {
                 $url = new moodle_url('/grade/edit/tree/outcomeitem.php',
                     ['courseid' => $this->courseid, 'id' => $object->id]);

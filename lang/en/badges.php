@@ -105,11 +105,12 @@ $string['backpackconnection_help'] = 'Connecting to a backpack enables you to sh
 $string['backpackconnectioncancelattempt'] = 'Connect using a different email address';
 $string['backpackconnectionconnect'] = 'Connect to backpack';
 $string['backpackconnectionresendemail'] = 'Resend verification email';
-$string['backpackconnectionunexpectedresult'] = 'There was a problem connecting to your backpack. Please check the credentials and try again.';
+$string['backpackconnectionunexpectedresult'] = 'There was a problem connecting to your backpack. Your backpack provider is sending this message: \'{$a}\'.';
 $string['backpackconnectionunexpectedmessage'] = 'The backpack returned the error: "{$a}".';
 $string['backpackdetails'] = 'Backpack settings';
 $string['backpackdisconnected'] = 'Backpack is disconnected';
 $string['backpackemail'] = 'Email address';
+$string['backpackemail_required'] = 'Email address can\'t be blank';
 $string['backpackemail_help'] = 'The email address associated with your backpack. While you are connected, any badges earned on this site will be associated with this email address.';
 $string['backpackemailverificationpending'] = 'Verification pending';
 $string['backpackemailverifyemailbody'] = 'Hi,
@@ -458,6 +459,7 @@ $string['openbadgesv1'] = 'Open Badges v1.0';
 $string['openbadgesv2'] = 'Open Badges v2.0';
 $string['openbadgesv2p1'] = 'Open Badges v2.1';
 $string['othernavigation'] = 'Other navigation ...';
+$string['password_required'] = 'Password can\'t be blank';
 $string['potentialrecipients'] = 'Potential badge recipients';
 $string['preferences'] = 'Badge preferences';
 $string['privacy:metadata:backpack'] = 'A record of user\'s backpacks';
@@ -545,6 +547,7 @@ Once a badge has been issued to at least one user, it automatically becomes **LO
 
 We want to make sure that all users complete the same requirements to earn a badge. Currently, it is not possible to revoke badges. If we allowed badges requirements to be modified all the time, we would most likely end up with users having the same badge for meeting completely different requirements.';
 $string['subject'] = 'Message subject';
+$string['tags'] = 'Tags';
 $string['targetname'] = 'Name';
 $string['targetname_help'] = 'The external skill or standard which the badge is aligned with.';
 $string['targeturl'] = 'URL';
@@ -558,6 +561,7 @@ $string['targetcode_help'] = 'A unique string identifier for referencing the ext
 $string['testbackpack'] = 'Test backpack \'{$a}\'';
 $string['testsettings'] = 'Test settings';
 $string['type'] = 'Type';
+$string['tagarea_badge'] = 'Badges';
 $string['userbadges'] = 'User badges';
 $string['variablesubstitution'] = 'Variable substitution in messages.';
 $string['variablesubstitution_help'] = 'In a badge message, certain variables can be inserted into the subject and/or body of a message so that they will be replaced with real values when the message is sent. The variables should be inserted into the text exactly as they are shown below. The following variables can be used:
