@@ -177,7 +177,7 @@ abstract class base {
      *
      * @param int|stdClass $courseorid either course id or
      *     an object that has the property 'format' and may contain property 'id'
-     * @return course_format
+     * @return base
      */
     public static final function instance($courseorid) {
         global $DB;
@@ -383,7 +383,7 @@ abstract class base {
      * This method ensures that 3rd party course format plugins that still use 'numsections' continue to
      * work but at the same time we no longer expect formats to have 'numsections' property.
      *
-     * @return int
+     * @return int The last section number, or -1 if sections are entirely missing
      */
     public function get_last_section_number() {
         $course = $this->get_course();
@@ -392,6 +392,12 @@ abstract class base {
         }
         $modinfo = get_fast_modinfo($course);
         $sections = $modinfo->get_section_info_all();
+
+        // Sections seem to be missing entirely. Avoid subsequent errors and return early.
+        if (count($sections) === 0) {
+            return -1;
+        }
+
         return (int)max(array_keys($sections));
     }
 
@@ -517,7 +523,7 @@ abstract class base {
     /**
      * Returns the display name of the given section that the course prefers.
      *
-     * @param int|stdClass $section Section object from database or just field course_sections.section
+     * @param int|stdClass|section_info $section Section object from database or just field course_sections.section
      * @return string Display name that the course format prefers, e.g. "Topic 2"
      */
     public function get_section_name($section) {
@@ -557,8 +563,7 @@ abstract class base {
     /**
      * Set if the current format instance will show multiple sections or an individual one.
      *
-     * Some formats has the hability to swith from one section to multiple sections per page,
-     * this method replaces the old print_multiple_section_page and print_single_section_page.
+     * Some formats has the hability to swith from one section to multiple sections per page.
      *
      * @param int $singlesection zero for all sections or a section number
      */
@@ -705,15 +710,14 @@ abstract class base {
      * @param int|stdClass $section Section object from database or just field course_sections.section
      *     if null the course view page is returned
      * @param array $options options for view URL. At the moment core uses:
-     *     'navigation' (bool) if true and section has no separate page, the function returns null
-     *     'sr' (int) used by multipage formats to specify to which section to return
+     *     'navigation' (bool) if true and section not empty, the function returns section page; otherwise, it returns course page.
+     *     'sr' (int) used by course formats to specify to which section to return
      *     'expanded' (bool) if true the section will be shown expanded, true by default
      * @return null|moodle_url
      */
     public function get_view_url($section, $options = array()) {
-        global $CFG;
         $course = $this->get_course();
-        $url = new moodle_url('/course/view.php', array('id' => $course->id));
+        $url = new moodle_url('/course/view.php', ['id' => $course->id]);
 
         if (array_key_exists('sr', $options)) {
             $sectionno = $options['sr'];
@@ -722,9 +726,10 @@ abstract class base {
         } else {
             $sectionno = $section;
         }
-        if (empty($CFG->linkcoursesections) && !empty($options['navigation']) && $sectionno !== null) {
-            // By default assume that sections are never displayed on separate pages.
-            return null;
+        if ((!empty($options['navigation']) || array_key_exists('sr', $options)) && $sectionno !== null) {
+            // Display section on separate page.
+            $sectioninfo = $this->get_section($sectionno);
+            return new moodle_url('/course/section.php', ['id' => $sectioninfo->id]);
         }
         if ($this->uses_sections() && $sectionno !== null) {
             // The url includes the parameter to expand the section by default.
@@ -737,7 +742,39 @@ abstract class base {
             }
             $url->set_anchor('section-'.$sectionno);
         }
+
         return $url;
+    }
+
+    /**
+     * Return the old non-ajax activity action url.
+     *
+     * BrowserKit behats tests cannot trigger javascript events,
+     * so we must translate to an old non-ajax url while non-ajax
+     * course editing is still supported.
+     *
+     * @param string $action action name the reactive action
+     * @param cm_info $cm course module
+     * @return moodle_url
+     */
+    public function get_non_ajax_cm_action_url(string $action, cm_info $cm): moodle_url {
+        $nonajaxactions = [
+            'cmDelete' => 'delete',
+            'cmDuplicate' => 'duplicate',
+            'cmHide' => 'hide',
+            'cmShow' => 'show',
+            'cmStealth' => 'stealth',
+        ];
+        if (!isset($nonajaxactions[$action])) {
+            throw new coding_exception('Unknown activity action: ' . $action);
+        }
+        $nonajaxaction = $nonajaxactions[$action];
+        $nonajaxurl = new moodle_url(
+            '/course/mod.php',
+            ['sesskey' => sesskey(), $nonajaxaction => $cm->id]
+        );
+        $nonajaxurl->param('sr', $this->get_section_number());
+        return $nonajaxurl;
     }
 
     /**
@@ -1432,6 +1469,21 @@ abstract class base {
     }
 
     /**
+     * Check if the group mode can be displayed.
+     * @param cm_info $cm the activity module
+     * @return bool
+     */
+    public function show_groupmode(cm_info $cm): bool {
+        if (!plugin_supports('mod', $cm->modname, FEATURE_GROUPS, false)) {
+            return false;
+        }
+        if (!has_capability('moodle/course:manageactivities', $cm->context)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Allows to specify for modinfo that section is not available even when it is visible and conditionally available.
      *
      * Note: affected user can be retrieved as: $section->modinfo->userid
@@ -1474,18 +1526,22 @@ abstract class base {
      *
      * Do not call this function directly, instead call course_delete_section()
      *
-     * @param int|stdClass|section_info $section
+     * @param int|stdClass|section_info $sectionornum
      * @param bool $forcedeleteifnotempty if set to false section will not be deleted if it has modules in it.
      * @return bool whether section was deleted
      */
-    public function delete_section($section, $forcedeleteifnotempty = false) {
+    public function delete_section($sectionornum, $forcedeleteifnotempty = false) {
         global $DB;
         if (!$this->uses_sections()) {
             // Not possible to delete section if sections are not used.
             return false;
         }
-        if (!is_object($section)) {
-            $section = $DB->get_record('course_sections', array('course' => $this->get_courseid(), 'section' => $section),
+        if (is_object($sectionornum)) {
+            $section = $sectionornum;
+        } else {
+            $section = $DB->get_record(
+                'course_sections',
+                ['course' => $this->get_courseid(), 'section' => $sectionornum],
                 'id,section,sequence,summary');
         }
         if (!$section || !$section->section) {
@@ -1862,5 +1918,14 @@ abstract class base {
         }
 
         return get_fast_modinfo($course)->get_section_info_by_id($newsection->id);
+    }
+
+    /**
+     * Get the required javascript files for the course format.
+     *
+     * @return array The list of javascript files required by the course format.
+     */
+    public function get_required_jsfiles(): array {
+        return [];
     }
 }

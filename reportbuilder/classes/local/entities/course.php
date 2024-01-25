@@ -50,16 +50,16 @@ require_once($CFG->dirroot . '/course/lib.php');
 class course extends base {
 
     /**
-     * Database tables that this entity uses and their default aliases.
+     * Database tables that this entity uses
      *
-     * @return array
+     * @return string[]
      */
-    protected function get_default_table_aliases(): array {
+    protected function get_default_tables(): array {
         return [
-            'course' => 'c',
-            'context' => 'cctx',
-            'tag_instance' => 'cti',
-            'tag' => 'ct',
+            'course',
+            'context',
+            'tag_instance',
+            'tag',
         ];
     }
 
@@ -206,18 +206,7 @@ class course extends base {
      * @return string[]
      */
     public function get_tag_joins(): array {
-        $course = $this->get_table_alias('course');
-        $taginstance = $this->get_table_alias('tag_instance');
-        $tag = $this->get_table_alias('tag');
-
-        return [
-            "LEFT JOIN {tag_instance} {$taginstance}
-                    ON {$taginstance}.component = 'core'
-                   AND {$taginstance}.itemtype = 'course'
-                   AND {$taginstance}.itemid = {$course}.id",
-            "LEFT JOIN {tag} {$tag}
-                    ON {$tag}.id = {$taginstance}.tagid",
-        ];
+        return $this->get_tag_joins_for_entity('core', 'course', $this->get_table_alias('course') . '.id');
     }
 
     /**

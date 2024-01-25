@@ -51,6 +51,7 @@ $string['audiencemultiselectpostfix'] = '{$a->elements} plus {$a->morecount} mor
 $string['audiencenotsaved'] = 'Audience not saved';
 $string['audiencesaved'] = 'Audience saved';
 $string['audienceupdated'] = 'Audience updated';
+$string['audienceusedbyschedule'] = 'This audience is used in a schedule for this report';
 $string['cardview'] = 'Card view';
 $string['cardview_help'] = 'Card view allows you to define the layout of your report when viewed on narrow devices. Columns will collapse beyond the limit set here, with a toggle to expand the card to view all report data.';
 $string['cardviewfirstcolumntitle'] = 'First column title';
@@ -137,11 +138,11 @@ $string['filterdateweeks'] = 'week(s)';
 $string['filterdateyears'] = 'year(s)';
 $string['filterdeleted'] = 'Deleted filter \'{$a}\'';
 $string['filterdoesnotcontain'] = 'Does not contain';
-$string['filterdurationunit'] = '{$a} unit';
 $string['filterendswith'] = 'Ends with';
 $string['filterequalorgreaterthan'] = 'Greater than or equal';
 $string['filterequalorlessthan'] = 'Less than or equal';
 $string['filterfieldoperator'] = '{$a} operator';
+$string['filterfieldunit'] = '{$a} unit';
 $string['filterfieldvalue'] = '{$a} value';
 $string['filtergreaterthan'] = 'Greater than';
 $string['filterinvalid'] = 'Invalid filter';
@@ -279,3 +280,6 @@ $string['usermodified'] = 'Modified by';
 $string['userpicture'] = 'User picture';
 $string['userselect'] = 'Select user';
 $string['viewreport'] = 'View report';
+
+// Deprecated since Moodle 4.4.
+$string['filterdurationunit'] = '{$a} unit';

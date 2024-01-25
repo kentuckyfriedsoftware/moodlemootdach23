@@ -470,13 +470,7 @@ class behat_core_generator extends behat_generator_base {
             }
         }
 
-        // Custom exception.
-        try {
-            $this->datagenerator->create_module($activityname, $data, $cmoptions);
-        } catch (coding_exception $e) {
-            throw new Exception('\'' . $activityname . '\' activity can not be added using this step,' .
-                    ' use the step \'I add a "ACTIVITY_OR_RESOURCE_NAME_STRING" to section "SECTION_NUMBER"\' instead');
-        }
+        $this->datagenerator->create_module($activityname, $data, $cmoptions);
     }
 
     /**
@@ -613,6 +607,16 @@ class behat_core_generator extends behat_generator_base {
 
         if (!isset($data['status'])) {
             $data['status'] = null;
+        } else {
+            $status = strtolower($data['status']);
+            switch ($status) {
+                case 'active':
+                    $data['status'] = ENROL_USER_ACTIVE;
+                    break;
+                case 'suspended':
+                    $data['status'] = ENROL_USER_SUSPENDED;
+                    break;
+            }
         }
 
         // If the provided course shortname is the site shortname we consider it a system role assign.

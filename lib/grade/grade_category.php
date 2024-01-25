@@ -722,6 +722,16 @@ class grade_category extends grade_object {
 
         }
 
+        // First, check if all grades are null, because the final grade will be null
+        // even when aggreateonlygraded is true.
+        $allnull = true;
+        foreach ($grade_values as $v) {
+            if (!is_null($v)) {
+                $allnull = false;
+                break;
+            }
+        }
+
         // For items with no value, and not excluded - either set their grade to 0 or exclude them.
         foreach ($items as $itemid=>$value) {
             if (!isset($grade_values[$itemid]) and !in_array($itemid, $excluded)) {
@@ -789,9 +799,13 @@ class grade_category extends grade_object {
             $result['grademin'] = 0;
         }
 
-        // Recalculate the grade back to requested range.
-        $finalgrade = grade_grade::standardise_score($agg_grade, 0, 1, $result['grademin'], $result['grademax']);
-        $grade->finalgrade = $this->grade_item->bounded_grade($finalgrade);
+        if ($allnull) {
+            $grade->finalgrade = null;
+        } else {
+            // Recalculate the grade back to requested range.
+            $finalgrade = grade_grade::standardise_score($agg_grade, 0, 1, $result['grademin'], $result['grademax']);
+            $grade->finalgrade = $this->grade_item->bounded_grade($finalgrade);
+        }
 
         $oldrawgrademin = $grade->rawgrademin;
         $oldrawgrademax = $grade->rawgrademax;
@@ -1097,7 +1111,7 @@ class grade_category extends grade_object {
                 $freq = array_count_values($converted_grade_values);
                 arsort($freq);                      // sort by frequency keeping keys
                 $top = reset($freq);               // highest frequency count
-                $modes = array_keys($freq, $top);  // search for all modes (have the same highest count)
+                $modes = moodle_array_keys_filter($freq, $top);  // Search for all modes (have the same highest count).
                 rsort($modes, SORT_NUMERIC);       // get highest mode
                 $agg_grade = reset($modes);
                 // Record the weights as used.
@@ -1650,7 +1664,7 @@ class grade_category extends grade_object {
                 // An extra credit grade item doesn't contribute to $totaloverriddengrademax.
                 continue;
             } else if ($gradeitem->weightoverride > 0 && $gradeitem->aggregationcoef2 <= 0) {
-                // An overriden item that defines a weight of 0 does not contribute to $totaloverriddengrademax.
+                // An overridden item that defines a weight of 0 does not contribute to $totaloverriddengrademax.
                 continue;
             }
 
@@ -1666,8 +1680,6 @@ class grade_category extends grade_object {
         // Keep a record of how much the override total is to see if it is above 100. It it is then we need to set the
         // other weights to zero and normalise the others.
         $overriddentotal = 0;
-        // If the overridden weight total is higher than 1 then set the other untouched weights to zero.
-        $setotherweightstozero = false;
         // Total up all of the weights.
         foreach ($overridearray as $gradeitemdetail) {
             // If the grade item has extra credit, then don't add it to the normalisetotal.
@@ -2536,25 +2548,21 @@ class grade_category extends grade_object {
 
         $result = $this->grade_item->set_locked($lockedstate, $cascade, true);
 
-        if ($cascade) {
-            //process all children - items and categories
-            if ($children = grade_item::fetch_all(array('categoryid'=>$this->id))) {
+        // Process all children - items and categories.
+        if ($children = grade_item::fetch_all(['categoryid' => $this->id])) {
+            foreach ($children as $child) {
+                $child->set_locked($lockedstate, $cascade, false);
 
-                foreach ($children as $child) {
-                    $child->set_locked($lockedstate, true, false);
-
-                    if (empty($lockedstate) and $refresh) {
-                        //refresh when unlocking
-                        $child->refresh_grades();
-                    }
+                if (empty($lockedstate) && $refresh) {
+                    // Refresh when unlocking.
+                    $child->refresh_grades();
                 }
             }
+        }
 
-            if ($children = grade_category::fetch_all(array('parent'=>$this->id))) {
-
-                foreach ($children as $child) {
-                    $child->set_locked($lockedstate, true, true);
-                }
+        if ($children = static::fetch_all(['parent' => $this->id])) {
+            foreach ($children as $child) {
+                $child->set_locked($lockedstate, $cascade, true);
             }
         }
 

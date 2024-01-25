@@ -82,6 +82,19 @@ $CFG->dboptions = array(
                                 // has additional configuration according to its environment,
                                 // which the administrator can specify to alter and
                                 // override any connection options.
+    // 'ssl' => '',             // A connection mode string from the list below.
+                                // Not supported by all drivers.
+                                //   prefer       Use SSL if available - postgres default  Postgres only
+                                //   disable      Force non secure connection              Postgres only
+                                //   require      Force SSL                                Postgres and MySQL
+                                //   verify-full  Force SSL and verify root CA             Postgres and MySQL
+                                // All mode names are adopted from Postgres
+                                // and other databases align where possible:
+                                //   Postgres: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE
+                                //   MySql:    https://www.php.net/manual/en/mysqli.real-connect.php
+                                // It is worth noting that for MySQL require and verify-full are the same - in both cases
+                                // verification will take place if you specify hostname as a name,
+                                // and it will be omitted if you put an IP address.
     // 'fetchbuffersize' => 100000, // On PostgreSQL, this option sets a limit
                                 // on the number of rows that are fetched into
                                 // memory when doing a large recordset query
@@ -564,18 +577,6 @@ $CFG->admin = 'admin';
 //
 //      $CFG->preventscheduledtaskchanges = true;
 //
-// As of version 2.4 Moodle serves icons as SVG images if the users browser appears
-// to support SVG.
-// For those wanting to control the serving of SVG images the following setting can
-// be defined in your config.php.
-// If it is not defined then the default (browser detection) will occur.
-//
-// To ensure they are always used when available:
-//      $CFG->svgicons = true;
-//
-// To ensure they are never used even when available:
-//      $CFG->svgicons = false;
-//
 // Some administration options allow setting the path to executable files. This can
 // potentially cause a security risk. Set this option to true to disable editing
 // those config settings via the web. They will need to be set explicitly in the
@@ -778,6 +779,23 @@ $CFG->admin = 'admin';
 // @ini_set('display_errors', '1');    // NOT FOR PRODUCTION SERVERS!
 // $CFG->debug = (E_ALL | E_STRICT);   // === DEBUG_DEVELOPER - NOT FOR PRODUCTION SERVERS!
 // $CFG->debugdisplay = 1;             // NOT FOR PRODUCTION SERVERS!
+//
+// Display exceptions using the 'pretty' Whoops! utility.
+// This is only used when the following conditions are met:
+// - Composer dependencies are installed
+// - $CFG->debug and $CFG->debugdisplay are set
+// - the request is not a CLI, or AJAX request
+//
+// To further control this, the debug_developer_use_pretty_exceptions setting can be set to false.
+// $CFG->debug_developer_use_pretty_exceptions = true;
+//
+// The Whoops! UI can also provide a link to open files in  your preferred editor.
+// You can set your preferred editor by setting:
+// $CFG->debug_developer_editor = 'vscode';
+//
+// See https://github.com/filp/whoops/blob/master/docs/Open%20Files%20In%20An%20Editor.md for more information on
+// supported editors.
+// If your editor is not listed you can provide a callback as documented.
 //
 // You can specify a comma separated list of user ids that that always see
 // debug messages, this overrides the debug flag in $CFG->debug and $CFG->debugdisplay
@@ -1198,6 +1216,54 @@ $CFG->admin = 'admin';
 // you just need to set showservicesandsupportcontent setting to false.
 //
 //      $CFG->showservicesandsupportcontent = false;
+//
+//=========================================================================
+// 20. NON HTTP ONLY COOKIES
+//=========================================================================
+//
+//  Cookies in Moodle now default to HTTP only cookies. This means that they cannot be accessed by JavaScript.
+//  Upgraded sites will keep the behaviour they had before the upgrade. New sites will have HTTP only cookies enabled.
+//  To enable HTTP only cookies set the following:
+//
+//      $CFG->cookiehttponly = true;
+//
+//  To disable HTTP only cookies set the following:
+//
+//      $CFG->cookiehttponly = false;
+//
+// 21. SECRET PASSWORD PEPPER
+//=========================================================================
+// A pepper is a component of the salt, but stored separately.
+// By splitting them it means that if the db is compromised the partial hashes are useless.
+// Unlike a salt, the pepper is not unique and is shared for all users, and MUST be kept secret.
+//
+// A pepper needs to have at least 112 bits of entropy,
+// so the pepper itself cannot be easily brute forced if you have a known password + hash combo.
+//
+// Once a pepper is set, existing passwords will be updated on next user login.
+// Once set there is no going back without resetting all user passwords.
+// To set peppers for your site, the following setting must be set in config.php:
+//
+//      $CFG->passwordpeppers = [
+//          1 => '#GV]NLie|x$H9[$rW%94bXZvJHa%z'
+//      ];
+//
+// The 'passwordpeppers' array must be numerically indexed with a positive number.
+// New peppers can be added by adding a new element to the array with a higher numerical index.
+// Upon next login a users password will be rehashed with the new pepper:
+//
+//      $CFG->passwordpeppers = [
+//          1 => '#GV]NLie|x$H9[$rW%94bXZvJHa%z',
+//          2 => '#GV]NLie|x$H9[$rW%94bXZvJHa%$'
+//      ];
+//
+// Peppers can be progressively removed by setting the latest pepper to an empty string:
+//
+//      $CFG->passwordpeppers = [
+//          1 => '#GV]NLie|x$H9[$rW%94bXZvJHa%z',
+//          2 => '#GV]NLie|x$H9[$rW%94bXZvJHa%$',
+//          3 => ''
+//      ];
 //
 //=========================================================================
 // ALL DONE!  To continue installation, visit your main page with a browser

@@ -118,45 +118,26 @@ class format_weeks extends core_courseformat\base {
      * @param int|stdClass $section Section object from database or just field course_sections.section
      *     if omitted the course view page is returned
      * @param array $options options for view URL. At the moment core uses:
-     *     'navigation' (bool) if true and section has no separate page, the function returns null
-     *     'sr' (int) used by multipage formats to specify to which section to return
+     *     'navigation' (bool) if true and section not empty, the function returns section page; otherwise, it returns course page.
+     *     'sr' (int) used by course formats to specify to which section to return
      * @return null|moodle_url
      */
     public function get_view_url($section, $options = array()) {
-        global $CFG;
         $course = $this->get_course();
-        $url = new moodle_url('/course/view.php', array('id' => $course->id));
-
-        $sr = null;
         if (array_key_exists('sr', $options)) {
-            $sr = $options['sr'];
-        }
-        if (is_object($section)) {
+            $sectionno = $options['sr'];
+        } else if (is_object($section)) {
             $sectionno = $section->section;
         } else {
             $sectionno = $section;
         }
-        if ($sectionno !== null) {
-            if ($sr !== null) {
-                if ($sr) {
-                    $usercoursedisplay = COURSE_DISPLAY_MULTIPAGE;
-                    $sectionno = $sr;
-                } else {
-                    $usercoursedisplay = COURSE_DISPLAY_SINGLEPAGE;
-                }
-            } else {
-                $usercoursedisplay = $course->coursedisplay ?? COURSE_DISPLAY_SINGLEPAGE;
-            }
-            if ($sectionno != 0 && $usercoursedisplay == COURSE_DISPLAY_MULTIPAGE) {
-                $url->param('section', $sectionno);
-            } else {
-                if (empty($CFG->linkcoursesections) && !empty($options['navigation'])) {
-                    return null;
-                }
-                $url->set_anchor('section-'.$sectionno);
-            }
+        if ((!empty($options['navigation']) || array_key_exists('sr', $options)) && $sectionno !== null) {
+            // Display section on separate page.
+            $sectioninfo = $this->get_section($sectionno);
+            return new moodle_url('/course/section.php', ['id' => $sectioninfo->id]);
         }
-        return $url;
+
+        return new moodle_url('/course/view.php', ['id' => $course->id]);
     }
 
     /**
@@ -406,14 +387,26 @@ class format_weeks extends core_courseformat\base {
         } else {
             $sectionnum = $section;
         }
-        $oneweekseconds = 604800;
-        // Hack alert. We add 2 hours to avoid possible DST problems. (e.g. we go into daylight
-        // savings and the date changes.
-        $startdate = $startdate + 7200;
+
+        // Create a DateTime object for the start date.
+        $startdateobj = new DateTime("@$startdate");
+        $startdateobj->setTimezone(core_date::get_user_timezone_object());
+
+        // Calculate the interval for one week.
+        $oneweekinterval = new DateInterval('P7D');
+
+        // Calculate the interval for the specified number of sections.
+        for ($i = 1; $i < $sectionnum; $i++) {
+            $startdateobj->add($oneweekinterval);
+        }
+
+        // Calculate the end date.
+        $enddateobj = clone $startdateobj;
+        $enddateobj->add($oneweekinterval);
 
         $dates = new stdClass();
-        $dates->start = $startdate + ($oneweekseconds * ($sectionnum - 1));
-        $dates->end = $dates->start + $oneweekseconds;
+        $dates->start = $startdateobj->getTimestamp();
+        $dates->end = $enddateobj->getTimestamp();
 
         return $dates;
     }
@@ -618,6 +611,15 @@ class format_weeks extends core_courseformat\base {
         $formatoptions = $this->get_format_options();
         $formatoptions['indentation'] = get_config('format_weeks', 'indentation');
         return $formatoptions;
+    }
+
+    /**
+     * Get the required javascript files for the course format.
+     *
+     * @return array The list of javascript files required by the course format.
+     */
+    public function get_required_jsfiles(): array {
+        return [];
     }
 }
 

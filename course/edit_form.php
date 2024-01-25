@@ -145,14 +145,28 @@ class course_edit_form extends moodleform {
             }
         }
 
+        // Get the task to change automatically the course visibility when the current day matches the course start date.
+        $task = \core\task\manager::get_scheduled_task('\core\task\show_started_courses_task');
+        $startdatestring = 'startdate';
+        if (!empty($task) && !$task->get_disabled()) {
+            // When the task is enabled, display a different help message.
+            $startdatestring = 'startdatewithtaskenabled';
+        }
         $mform->addElement('date_time_selector', 'startdate', get_string('startdate'));
-        $mform->addHelpButton('startdate', 'startdate');
+        $mform->addHelpButton('startdate', $startdatestring);
         $date = (new DateTime())->setTimestamp(usergetmidnight(time()));
         $date->modify('+1 day');
         $mform->setDefault('startdate', $date->getTimestamp());
 
+        // Get the task to change automatically the course visibility when the current day matches the course end date.
+        $task = \core\task\manager::get_scheduled_task('\core\task\hide_ended_courses_task');
+        $enddatestring = 'enddate';
+        if (!empty($task) && !$task->get_disabled()) {
+            // When the task is enabled, display a different help message.
+            $enddatestring = 'enddatewithtaskenabled';
+        }
         $mform->addElement('date_time_selector', 'enddate', get_string('enddate'), array('optional' => true));
-        $mform->addHelpButton('enddate', 'enddate');
+        $mform->addHelpButton('enddate', $enddatestring);
 
         if (!empty($CFG->enablecourserelativedates)) {
             $attributes = [
@@ -387,28 +401,6 @@ class course_edit_form extends moodleform {
         $handler->set_parent_context($categorycontext); // For course handler only.
         $handler->instance_form_definition($mform, empty($course->id) ? 0 : $course->id);
 
-        // Add communication plugins to the form.
-        if (core_communication\api::is_available()) {
-
-            $instanceconfig = core_communication\processor::PROVIDER_NONE;
-            // For new courses.
-            if (empty($course->id)) {
-                $instanceid = 0;
-                if (!empty($courseconfig->coursecommunicationprovider)) {
-                    $instanceconfig = $courseconfig->coursecommunicationprovider;
-                }
-            } else {
-                // For existing courses.
-                $instanceid = $course->id;
-            }
-
-            $communication = \core_communication\api::load_by_instance(
-                'core_course',
-                'coursecommunication',
-                $instanceid);
-            $communication->form_definition($mform, $instanceconfig);
-            $communication->set_data($course);
-        }
 
         // When two elements we need a group.
         $buttonarray = array();
@@ -480,15 +472,6 @@ class course_edit_form extends moodleform {
         $handler  = core_course\customfield\course_handler::create();
         $handler->instance_form_definition_after_data($mform, empty($courseid) ? 0 : $courseid);
 
-        // Add communication plugins to the form.
-        if (core_communication\api::is_available()) {
-            $communication = \core_communication\api::load_by_instance(
-                'core_course',
-                'coursecommunication',
-                empty($course->id) ? 0 : $course->id
-            );
-            $communication->form_definition_for_provider($mform);
-        }
     }
 
     /**
