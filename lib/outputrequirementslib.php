@@ -1080,21 +1080,21 @@ class page_requirements_manager {
 
         $this->js_amd_inline($js);
     }
-    
+
     /**
      * Export a plugins configuration for use in javascript
-     * 
+     *
      * This function creates a minimal inline JS snippet that adds
      * an element to the global M variable named for the component
      * passed as first argument. M.<component name> will then contain
      * whatever settings are found in the plugins_config table
      * Pass an array of strings for $desired_settings to specify which
      * settings should be added, otherwise everything will be.
-     * 
+     *
      * NOTE: Be careful about what you expose to the frontend. You DO NOT
      * want sensitive data like security tokens or passwords showing up in
      * the global M variable
-     * 
+     *
      * @param string $component The name of the plugin
      * @param array $desiredsettings An array of the names of the settings that should be exported
      */
