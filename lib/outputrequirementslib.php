@@ -1092,12 +1092,12 @@ class page_requirements_manager {
      * settings should be added, otherwise everything will be.
      *
      * NOTE: Be careful about what you expose to the frontend.
-     * You DO NOT want sensitive data like security tokens or passwords 
+     * You DO NOT want sensitive data like security tokens or passwords
      * showing up in the global M variable
      *
      * @param string $component The name of the plugin
      * @param array $desiredsettings An array of the names of the settings that should be exported
-     * 
+     *
      */
     public function js_export_plugin_config(string $component, array $desiredsettings = null) {
         global $DB;
